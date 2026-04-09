@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,17 +31,12 @@ import {
   ExternalLink,
   Activity,
 } from "lucide-react";
-import {
-  type CarouselApi,
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { CarouselItem } from "@/components/ui/carousel";
+import { ResearchCard, CarouselWithDots } from "@/components/research-card";
 import { translations, type Locale } from "@/lib/translations";
-
-const LOCALE_KEY = "quant-lab-locale";
+import { members } from "@/lib/members";
+import { projectsByKey } from "@/lib/projects";
+import { LOCALE_KEY } from "@/lib/constants";
 
 const researchByKey = {
   all: [
@@ -68,136 +64,6 @@ const researchByKey = {
     { key: "marketMaking" as const,   tags: ["HFT", "Microstructure"], date: "May 2024" },
   ],
 };
-
-const allProjects = [
-  { title: "Systematic Crypto Volatility Dashboard", desc: "A monitoring dashboard that tracks implied and realized volatility across major crypto assets.", tags: ["Crypto", "Volatility", "ML"],      date: "Feb 2026" },
-  { title: "Multi-Asset Backtesting Engine",          desc: "Reusable strategy testing infrastructure with transaction costs, slippage, and portfolio constraints.", tags: ["Equities", "Factor", "Macro"], date: "Dec 2025" },
-  { title: "Microstructure Signal Sandbox",           desc: "Experimental workspace for order book imbalance, queue-position, and trade-signing signals.", tags: ["HFT", "Microstructure"],             date: "Oct 2025" },
-  { title: "Crypto Regime Detection Pipeline",        desc: "End-to-end pipeline that labels market regimes in real time and feeds downstream strategy selectors.", tags: ["Crypto", "ML"],              date: "Aug 2025" },
-  { title: "Factor Zoo Explorer",                     desc: "Interactive tool to browse, backtest, and compare over 50 academic factors across US equities.", tags: ["Equities", "Factor"],              date: "Jun 2025" },
-  { title: "Real-time Order Flow Monitor",            desc: "WebSocket-based dashboard streaming level-2 order book data with live imbalance and trade-sign metrics.", tags: ["HFT", "Microstructure"],   date: "Apr 2025" },
-  { title: "Portfolio Risk Dashboard",                desc: "Unified risk view with VaR, CVaR, stress scenarios, and factor exposure decomposition across asset classes.", tags: ["Equities", "Macro"],     date: "Jan 2025" },
-  { title: "Tail Risk Options Screener",              desc: "Screens listed options for cheap tail protection based on skew, term structure, and realized vol ratios.", tags: ["Crypto", "Volatility"],     date: "Nov 2024" },
-];
-
-const projectsByKey = {
-  all:      allProjects,
-  crypto:   allProjects.filter((p) => p.tags.includes("Crypto")),
-  equities: allProjects.filter((p) => p.tags.includes("Equities")),
-  hft:      allProjects.filter((p) => p.tags.includes("HFT")),
-};
-
-const members = [
-  { name: "Thomas Prada",        roleKey: "quantResearcher" as const,  focusKey: "volatilityModels" as const,       initials: "TP",  email: "thomas@aird.ai",    linkedin: "https://linkedin.com/in/thomasprada" },
-  { name: "Ferney Diaz",         roleKey: "dataEngineer" as const,      focusKey: "pipelineInfra" as const,          initials: "FD",  email: "ferney@aird.ai",    linkedin: "https://linkedin.com/in/ferneydiaz" },
-  { name: "Solange Félix",       roleKey: "macroAnalyst" as const,      focusKey: "globalMacro" as const,            initials: "SF",  email: "solange@aird.ai",   linkedin: "https://linkedin.com/in/solangefelix" },
-  { name: "Dilan Chacón",        roleKey: "quantResearcher" as const,   focusKey: "factorModels" as const,           initials: "DC",  email: "dilan@aird.ai",     linkedin: "https://linkedin.com/in/dilanchacon" },
-  { name: "Santiago Ariza",      roleKey: "portfolioManager" as const,  focusKey: "alternativeStrategies" as const,  initials: "SA",  email: "santiago@aird.ai",  linkedin: "https://linkedin.com/in/santiagoariza" },
-  { name: "Camilo Rodriguez",    roleKey: "riskAnalyst" as const,       focusKey: "varStress" as const,              initials: "CR",  email: "camilo@aird.ai",    linkedin: "https://linkedin.com/in/camilorodriguez" },
-  { name: "Cesar Solano",        roleKey: "quantResearcher" as const,   focusKey: "marketMicrostructure" as const,   initials: "CS",  email: "cesar@aird.ai",     linkedin: "https://linkedin.com/in/cesarsolano" },
-  { name: "Gabriel Lopez",       roleKey: "dataEngineer" as const,      focusKey: "researchInfra" as const,          initials: "GL",  email: "gabriel@aird.ai",   linkedin: "https://linkedin.com/in/gabriellopez" },
-  { name: "Juan Luckas Alvarado",roleKey: "macroAnalyst" as const,      focusKey: "regimeId" as const,               initials: "JLA", email: "juanluckas@aird.ai",linkedin: "https://linkedin.com/in/juanluckas" },
-  { name: "Sebastián Guzmán",    roleKey: "quantResearcher" as const,   focusKey: "backtesting" as const,            initials: "SG",  email: "sebastian@aird.ai", linkedin: "https://linkedin.com/in/sebastianguzman" },
-  { name: "Valentina Baez",      roleKey: "researchAnalyst" as const,   focusKey: "thematic" as const,               initials: "VB",  email: "valentina@aird.ai", linkedin: "https://linkedin.com/in/valentinabaez" },
-];
-
-const tagColor: Record<string, string> = {
-  Crypto: "bg-violet-500/10 text-violet-700 border-violet-500/30",
-  Volatility: "bg-red-500/10 text-red-700 border-red-500/30",
-  ML: "bg-blue-500/10 text-blue-700 border-blue-500/30",
-  Equities: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30",
-  Factor: "bg-amber-500/10 text-amber-700 border-amber-500/30",
-  Macro: "bg-orange-500/10 text-orange-700 border-orange-500/30",
-  HFT: "bg-cyan-500/10 text-cyan-700 border-cyan-500/30",
-  Microstructure: "bg-pink-500/10 text-pink-700 border-pink-500/30",
-};
-
-function ResearchCard({
-  title,
-  desc,
-  tags,
-  date,
-  readLabel,
-}: {
-  title: string;
-  desc: string;
-  tags: string[];
-  date: string;
-  readLabel: string;
-}) {
-  return (
-    <Card className="h-full bg-white border-neutral-200 hover:border-neutral-400 transition-all duration-300 group shadow-sm">
-      <CardContent className="p-6 h-full flex flex-col gap-4">
-        <div className="flex items-start justify-between gap-4">
-          <h3 className="text-base font-semibold leading-snug group-hover:text-neutral-900 transition-colors text-neutral-900">
-            {title}
-          </h3>
-          <span className="text-xs text-neutral-500 shrink-0 mt-0.5">{date}</span>
-        </div>
-        <p className="text-sm text-neutral-600 leading-relaxed flex-1">{desc}</p>
-        <div className="flex items-center justify-between mt-auto">
-          <div className="flex flex-wrap gap-1.5">
-            {tags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="outline"
-                className={`text-[11px] px-2 py-0 ${tagColor[tag] ?? "text-neutral-600 border-neutral-300"}`}
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-neutral-600 hover:text-neutral-900 p-0 h-auto gap-1 text-xs"
-          >
-            {readLabel} <ChevronRight className="w-3 h-3" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function CarouselWithDots({ children, itemCount }: { children: React.ReactNode; itemCount: number }) {
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState(0);
-  const [snapCount, setSnapCount] = useState(0);
-
-  useEffect(() => {
-    if (!api) return;
-    setSnapCount(api.scrollSnapList().length);
-    setCurrent(api.selectedScrollSnap());
-    api.on("select", () => setCurrent(api.selectedScrollSnap()));
-  }, [api]);
-
-  return (
-    <Carousel setApi={setApi} opts={{ align: "start" }} className="w-full">
-      <CarouselContent className="-ml-4">
-        {children}
-      </CarouselContent>
-      {itemCount > 3 && (
-        <div className="flex items-center justify-center gap-4 mt-6">
-          <CarouselPrevious className="static translate-y-0 shrink-0" />
-          <div className="flex gap-2">
-            {Array.from({ length: snapCount }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => api?.scrollTo(i)}
-                className={`rounded-full transition-all duration-200 ${
-                  i === current ? "w-4 h-1.5 bg-neutral-900" : "w-1.5 h-1.5 bg-neutral-300 hover:bg-neutral-500"
-                }`}
-                aria-label={`Go to slide ${i + 1}`}
-              />
-            ))}
-          </div>
-          <CarouselNext className="static translate-y-0 shrink-0" />
-        </div>
-      )}
-    </Carousel>
-  );
-}
 
 export default function Page() {
   const [locale, setLocale] = useState<Locale>("en");
@@ -431,64 +297,66 @@ export default function Page() {
           <section id="team" className="py-20 space-y-8">
             <h2 className="text-3xl font-bold text-neutral-900">{t.team.title}</h2>
             <div className="grid md:grid-cols-3 gap-4">
-              {members.map(({ name, roleKey, focusKey, initials, email, linkedin }) => (
-                <Card key={name} className="bg-white border-neutral-200 hover:border-neutral-300 transition-all group shadow-sm">
-                  <CardContent className="p-6 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-9 h-9 border border-neutral-200">
-                        <AvatarFallback className="bg-neutral-100 text-neutral-600 text-xs font-medium">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold text-sm text-neutral-900">{name}</p>
-                        <p className="text-xs text-neutral-600">{t.roles[roleKey]}</p>
+              {members.map(({ slug, name, roleKey, focusKey, initials, email, linkedin }) => (
+                <Link key={name} href={`/team/${slug}`} className="block">
+                  <Card className="bg-white border-neutral-200 hover:border-neutral-400 transition-all group shadow-sm h-full">
+                    <CardContent className="p-6 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-9 h-9 border border-neutral-200">
+                          <AvatarFallback className="bg-neutral-100 text-neutral-600 text-xs font-medium">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-semibold text-sm text-neutral-900 group-hover:underline">{name}</p>
+                          <p className="text-xs text-neutral-600">{t.roles[roleKey]}</p>
+                        </div>
                       </div>
-                    </div>
-                    <Separator className="bg-neutral-200" />
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-neutral-600">{t.focus[focusKey]}</span>
-                      <div className="flex gap-1">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <a href={linkedin} target="_blank" rel="noreferrer">
+                      <Separator className="bg-neutral-200" />
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-neutral-600">{t.focus[focusKey]}</span>
+                        <div className="flex gap-1" onClick={(e) => e.preventDefault()}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <a href={linkedin} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-500 hover:text-neutral-900">
+                                  <Linkedin className="w-3.5 h-3.5" />
+                                </Button>
+                              </a>
+                            </TooltipTrigger>
+                            <TooltipContent>LinkedIn</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <a href={`mailto:${email}`} onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-500 hover:text-neutral-900">
+                                  <Mail className="w-3.5 h-3.5" />
+                                </Button>
+                              </a>
+                            </TooltipTrigger>
+                            <TooltipContent>{email}</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-500 hover:text-neutral-900">
-                                <Linkedin className="w-3.5 h-3.5" />
+                                <Github className="w-3.5 h-3.5" />
                               </Button>
-                            </a>
-                          </TooltipTrigger>
-                          <TooltipContent>LinkedIn</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <a href={`mailto:${email}`}>
+                            </TooltipTrigger>
+                            <TooltipContent>GitHub</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-500 hover:text-neutral-900">
-                                <Mail className="w-3.5 h-3.5" />
+                                <Twitter className="w-3.5 h-3.5" />
                               </Button>
-                            </a>
-                          </TooltipTrigger>
-                          <TooltipContent>{email}</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-500 hover:text-neutral-900">
-                              <Github className="w-3.5 h-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>GitHub</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-neutral-500 hover:text-neutral-900">
-                              <Twitter className="w-3.5 h-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Twitter</TooltipContent>
-                        </Tooltip>
+                            </TooltipTrigger>
+                            <TooltipContent>Twitter</TooltipContent>
+                          </Tooltip>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
 
