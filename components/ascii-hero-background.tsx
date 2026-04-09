@@ -230,7 +230,6 @@ export function AsciiHeroBackground({
       return;
     }
 
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     let frameId = 0;
     let resizeObserver: ResizeObserver | null = null;
     let dims = measureGrid(element);
@@ -265,12 +264,6 @@ export function AsciiHeroBackground({
         return;
       }
 
-      if (mediaQuery.matches) {
-        draw(INITIAL_FRAME_TIME);
-        notifyReady();
-        return;
-      }
-
       if (timestamp - lastPaintAt >= 1000 / TARGET_FPS) {
         draw(timestamp * 0.001);
         lastPaintAt = timestamp;
@@ -301,18 +294,6 @@ export function AsciiHeroBackground({
     notifyReady();
     frameId = window.requestAnimationFrame(paint);
 
-    const handleMotionChange = () => {
-      draw(lastSceneTime);
-      notifyReady();
-
-      if (mediaQuery.matches) {
-        window.cancelAnimationFrame(frameId);
-        return;
-      }
-
-      frameId = window.requestAnimationFrame(paint);
-    };
-
     const handleVisibilityChange = () => {
       if (document.hidden) {
         window.cancelAnimationFrame(frameId);
@@ -324,13 +305,11 @@ export function AsciiHeroBackground({
       frameId = window.requestAnimationFrame(paint);
     };
 
-    mediaQuery.addEventListener("change", handleMotionChange);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       window.cancelAnimationFrame(frameId);
       resizeObserver?.disconnect();
-      mediaQuery.removeEventListener("change", handleMotionChange);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [onReady]);

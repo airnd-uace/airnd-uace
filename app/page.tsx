@@ -80,6 +80,7 @@ function AnimatedSection({ children, className }: { children: ReactNode; classNa
 }
 
 export default function Page() {
+  const [shouldShowBoot, setShouldShowBoot] = useState(true);
   const [locale, setLocale] = useState<Locale>("en");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [heroReady, setHeroReady] = useState(false);
@@ -95,6 +96,15 @@ export default function Page() {
   }, [locale]);
 
   useEffect(() => {
+    const hasSeenBoot = window.sessionStorage.getItem("aird-ascii-boot-seen");
+
+    if (hasSeenBoot === "true") {
+      setShouldShowBoot(false);
+      setBootDelayDone(true);
+      return;
+    }
+
+    window.sessionStorage.setItem("aird-ascii-boot-seen", "true");
     const timeoutId = window.setTimeout(() => {
       setBootDelayDone(true);
     }, 720);
@@ -105,7 +115,7 @@ export default function Page() {
   }, []);
 
   const t = translations[locale];
-  const showBootOverlay = !heroReady || !bootDelayDone;
+  const showBootOverlay = shouldShowBoot && (!heroReady || !bootDelayDone);
 
   const toggleLocale = () => setLocale((l) => (l === "en" ? "es" : "en"));
 
