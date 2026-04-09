@@ -45,7 +45,10 @@ import {
 } from "lucide-react";
 import { CarouselItem } from "@/components/ui/carousel";
 import { ResearchCard, CarouselWithDots } from "@/components/research-card";
-import { AsciiHeroBackground } from "@/components/ascii-hero-background";
+import {
+  AsciiBootPreview,
+  AsciiHeroBackground,
+} from "@/components/ascii-hero-background";
 import { SearchCommand } from "@/components/search-command";
 import { SiteFooter } from "@/components/site-footer";
 import { useInView } from "@/hooks/use-in-view";
@@ -79,6 +82,8 @@ function AnimatedSection({ children, className }: { children: ReactNode; classNa
 export default function Page() {
   const [locale, setLocale] = useState<Locale>("en");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
+  const [bootDelayDone, setBootDelayDone] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(LOCALE_KEY) as Locale | null;
@@ -89,7 +94,18 @@ export default function Page() {
     localStorage.setItem(LOCALE_KEY, locale);
   }, [locale]);
 
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setBootDelayDone(true);
+    }, 720);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+
   const t = translations[locale];
+  const showBootOverlay = !heroReady || !bootDelayDone;
 
   const toggleLocale = () => setLocale((l) => (l === "en" ? "es" : "en"));
 
@@ -107,6 +123,20 @@ export default function Page() {
 
   return (
     <TooltipProvider>
+      <div
+        aria-hidden="true"
+        className={`fixed inset-0 z-[140] flex items-center justify-center bg-neutral-50 transition-opacity duration-700 ${
+          showBootOverlay ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
+        <div
+          className={`flex h-[84px] w-[84px] items-center justify-center rounded-xl border border-neutral-200/80 bg-white shadow-sm transition-all duration-700 ${
+            showBootOverlay ? "scale-100 opacity-100" : "scale-95 opacity-0"
+          }`}
+        >
+          <AsciiBootPreview />
+        </div>
+      </div>
       <SearchCommand locale={locale} />
       <main className="min-h-screen bg-neutral-50 text-neutral-900">
         {/* NAV */}
@@ -213,7 +243,7 @@ export default function Page() {
         <div className="max-w-5xl mx-auto px-6">
           {/* HERO */}
           <section className="relative left-1/2 isolate flex min-h-[calc(100vh-3.5rem)] w-dvw -translate-x-1/2 flex-col justify-center overflow-hidden rounded-none py-12 md:py-16 md:rounded-[2rem]">
-            <AsciiHeroBackground />
+            <AsciiHeroBackground onReady={() => setHeroReady(true)} />
             <div
               className="absolute inset-0 rounded-none border border-neutral-200/80 shadow-sm md:rounded-[2rem]"
               style={{

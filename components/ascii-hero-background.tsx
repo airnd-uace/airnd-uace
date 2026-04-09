@@ -8,6 +8,9 @@ const INITIAL_FRAME_TIME = 1.6;
 const INITIAL_COLS = 96;
 const INITIAL_ROWS = 28;
 const INITIAL_CHAR_ASPECT = 0.52;
+const BOOT_COLS = 12;
+const BOOT_ROWS = 8;
+const BOOT_CHAR_ASPECT = 0.52;
 
 const PALETTES = [
   // Previous palette:
@@ -132,6 +135,12 @@ const INITIAL_FRAME_HTML = renderFrame(
   INITIAL_FRAME_TIME,
   INITIAL_CHAR_ASPECT,
 );
+const BOOT_FRAME_HTML = renderFrame(
+  BOOT_COLS,
+  BOOT_ROWS,
+  INITIAL_FRAME_TIME,
+  BOOT_CHAR_ASPECT,
+);
 
 function measureGrid(element: HTMLElement) {
   const style = window.getComputedStyle(element);
@@ -145,8 +154,74 @@ function measureGrid(element: HTMLElement) {
   return { cols, rows, charAspect };
 }
 
-export function AsciiHeroBackground() {
+export function AsciiBootPreview() {
+  const bootRef = useRef<HTMLPreElement | null>(null);
+
+  useLayoutEffect(() => {
+    const element = bootRef.current;
+
+    if (!element) {
+      return;
+    }
+
+    let frameId = 0;
+    let lastPaintAt = 0;
+
+    const paint = (timestamp: number) => {
+      if (document.hidden) {
+        return;
+      }
+
+      if (timestamp - lastPaintAt >= 1000 / TARGET_FPS) {
+        element.innerHTML = renderFrame(
+          BOOT_COLS,
+          BOOT_ROWS,
+          timestamp * 0.001,
+          BOOT_CHAR_ASPECT,
+        );
+        lastPaintAt = timestamp;
+      }
+
+      frameId = window.requestAnimationFrame(paint);
+    };
+
+    element.innerHTML = BOOT_FRAME_HTML;
+    frameId = window.requestAnimationFrame(paint);
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        window.cancelAnimationFrame(frameId);
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(paint);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  return (
+    <pre
+      ref={bootRef}
+      className="m-0 overflow-hidden whitespace-pre text-[8px] leading-[0.82] tracking-[-0.03em] text-black"
+      dangerouslySetInnerHTML={{ __html: BOOT_FRAME_HTML }}
+      suppressHydrationWarning
+    />
+  );
+}
+
+export function AsciiHeroBackground({
+  onReady,
+}: {
+  onReady?: () => void;
+}) {
   const preRef = useRef<HTMLPreElement | null>(null);
+  const hasNotifiedReadyRef = useRef(false);
 
   useLayoutEffect(() => {
     const element = preRef.current;
@@ -172,6 +247,15 @@ export function AsciiHeroBackground() {
       lastSceneTime = sceneTime;
     };
 
+    const notifyReady = () => {
+      if (hasNotifiedReadyRef.current) {
+        return;
+      }
+
+      hasNotifiedReadyRef.current = true;
+      onReady?.();
+    };
+
     const paint = (timestamp: number) => {
       if (!element) {
         return;
@@ -183,12 +267,14 @@ export function AsciiHeroBackground() {
 
       if (mediaQuery.matches) {
         draw(INITIAL_FRAME_TIME);
+        notifyReady();
         return;
       }
 
       if (timestamp - lastPaintAt >= 1000 / TARGET_FPS) {
         draw(timestamp * 0.001);
         lastPaintAt = timestamp;
+        notifyReady();
       }
 
       frameId = window.requestAnimationFrame(paint);
@@ -212,10 +298,12 @@ export function AsciiHeroBackground() {
     resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(element);
     draw(lastSceneTime);
+    notifyReady();
     frameId = window.requestAnimationFrame(paint);
 
     const handleMotionChange = () => {
       draw(lastSceneTime);
+      notifyReady();
 
       if (mediaQuery.matches) {
         window.cancelAnimationFrame(frameId);
@@ -232,6 +320,7 @@ export function AsciiHeroBackground() {
       }
 
       draw(lastSceneTime);
+      notifyReady();
       frameId = window.requestAnimationFrame(paint);
     };
 
@@ -244,7 +333,7 @@ export function AsciiHeroBackground() {
       mediaQuery.removeEventListener("change", handleMotionChange);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, []);
+  }, [onReady]);
 
   return (
     <div
