@@ -5,6 +5,19 @@ import { useEffect, useRef } from "react";
 const DENSITY = "▀▄▚▐─═0123.+?";
 const TARGET_FPS = 20;
 
+const PALETTES = [
+  // Previous palette:
+  // { soft: "#8ec5ff", strong: "#2563eb" },
+  { soft: "#eef4fb", strong: "#d9e4f2" },
+  { soft: "#edf2f7", strong: "#d6dee8" },
+  { soft: "#f3f6fa", strong: "#dbe7f5" },
+  { soft: "#eef6ff", strong: "#d7e6f7" },
+  { soft: "#f5f7fa", strong: "#dde4ec" },
+  { soft: "#eef3f8", strong: "#d4dfeb" },
+] as const;
+
+const PALETTE_CYCLE_SECONDS = 4;
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
@@ -47,9 +60,15 @@ function sdCircle(x: number, y: number, radius: number) {
   return Math.hypot(x, y) - radius;
 }
 
+function getPalette(time: number) {
+  const index = Math.floor(time / PALETTE_CYCLE_SECONDS) % PALETTES.length;
+  return PALETTES[index];
+}
+
 function renderFrame(cols: number, rows: number, time: number, charAspect: number) {
   let output = "";
   const minGrid = Math.min(cols, rows);
+  const palette = getPalette(time);
 
   for (let row = 0; row < rows; row += 1) {
     let run = "";
@@ -81,7 +100,7 @@ function renderFrame(cols: number, rows: number, time: number, charAspect: numbe
       const value = clamp((1 - Math.exp(-3 * Math.abs(distance))) * band, 0, 1);
       const index = Math.floor(value * (DENSITY.length - 1));
       const char = DENSITY[index];
-      const color = band === 0 ? "#8ec5ff" : "#2563eb";
+      const color = band === 0 ? palette.soft : palette.strong;
 
       if (currentColor && color !== currentColor) {
         output += `<span style="color:${currentColor}">${run}</span>`;
@@ -195,7 +214,7 @@ export function AsciiHeroBackground() {
     >
       <pre
         ref={preRef}
-        className="absolute inset-0 m-0 hidden h-full w-full overflow-hidden whitespace-pre px-4 pt-8 text-[10px] leading-[0.78] tracking-[-0.06em] text-black sm:block md:px-6 md:text-[11px] lg:text-[12px]"
+        className="absolute inset-0 m-0 hidden h-full w-full overflow-hidden whitespace-pre px-4 pt-8 text-[13px] leading-[0.82] tracking-[-0.04em] text-black sm:block md:px-6 md:text-[14px] lg:text-[15px]"
       />
     </div>
   );
